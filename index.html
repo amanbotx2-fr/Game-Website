@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GameHub - Play classic games solo or with friends">
+    <title>GameHub - Play Classic Games</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">GameHub</h1>
+            <p class="tagline">Play classic games — solo or with friends</p>
+        </header>
+
+        <main class="main-content">
+            <section class="games-section">
+                <div class="games-grid">
+                    <!-- Chess Card (Active) -->
+                    <article class="game-card active">
+                        <div class="game-icon">♟️</div>
+                        <h2 class="game-name">Chess</h2>
+                        <p class="game-description">Play with AI or a friend on the same device</p>
+                        <button class="play-button" data-game="chess">Play Now</button>
+                    </article>
+
+                    <!-- Tic Tac Toe Card (Coming Soon) -->
+                    <article class="game-card coming-soon">
+                        <div class="game-icon">❌</div>
+                        <h2 class="game-name">Tic Tac Toe</h2>
+                        <p class="game-description">Challenge your friend in this classic strategy game</p>
+                        <button class="play-button" disabled>Coming Soon</button>
+                        <div class="coming-soon-badge">Coming Soon</div>
+                    </article>
+
+                    <!-- Sudoku Card (Coming Soon) -->
+                    <article class="game-card coming-soon">`
+                        <div class="game-icon">🔢</div>
+                        <h2 class="game-name">Sudoku</h2>
+                        <p class="game-description">Solve number puzzles and train your brain</p>
+                        <button class="play-button" disabled>Coming Soon</button>
+                        <div class="coming-soon-badge">Coming Soon</div>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p class="footer-text">More games coming soon</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
