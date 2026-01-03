@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <title>GameHub - Play Classic Games</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <header class="header">
@@ -25,22 +27,20 @@
                         <button class="play-button" data-game="chess">Play Now</button>
                     </article>
 
-                    <!-- Tic Tac Toe Card (Coming Soon) -->
-                    <article class="game-card coming-soon">
+                    <!-- Tic Tac Toe Card (Active) -->
+                    <article class="game-card">
                         <div class="game-icon">❌</div>
                         <h2 class="game-name">Tic Tac Toe</h2>
                         <p class="game-description">Challenge your friend in this classic strategy game</p>
-                        <button class="play-button" disabled>Coming Soon</button>
-                        <div class="coming-soon-badge">Coming Soon</div>
+                        <button class="play-button" data-game="ttt">Play Now</button>
                     </article>
 
-                    <!-- Sudoku Card (Coming Soon) -->
-                    <article class="game-card coming-soon">`
+                    <!-- Sudoku Card (Active) -->
+                    <article class="game-card">`
                         <div class="game-icon">🔢</div>
                         <h2 class="game-name">Sudoku</h2>
                         <p class="game-description">Solve number puzzles and train your brain</p>
-                        <button class="play-button" disabled>Coming Soon</button>
-                        <div class="coming-soon-badge">Coming Soon</div>
+                        <button class="play-button" data-game="sudoku">Play Now</button>
                     </article>
                 </div>
             </section>
@@ -53,4 +53,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

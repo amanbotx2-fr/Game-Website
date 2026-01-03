@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Tic Tac Toe - GameHub">
+    <title>Tic Tac Toe - GameHub</title>
+    <link rel="stylesheet" href="ttt.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="../index.html" class="back-button" aria-label="Back to home">
+                <span class="back-arrow">←</span>
+                <span class="back-text">Back</span>
+            </a>
+            <h1 class="title">Tic Tac Toe</h1>
+            <p class="subtitle">Play with a friend on the same device</p>
+        </header>
+
+        <main class="main-content">
+            <section class="mode-info">
+                <p class="mode-label">Local Multiplayer</p>
+                <div class="player-indicators">
+                    <div class="player-indicator active" id="playerX">
+                        <span class="player-symbol">X</span>
+                        <span class="player-label">Player 1</span>
+                    </div>
+                    <div class="player-indicator" id="playerO">
+                        <span class="player-symbol">O</span>
+                        <span class="player-label">Player 2</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="game-container">
+                <div class="game-status" id="gameStatus">Player X's Turn</div>
+                
+                <div class="board-wrapper">
+                    <div class="game-board" id="gameBoard">
+                        <div class="cell" data-index="0"></div>
+                        <div class="cell" data-index="1"></div>
+                        <div class="cell" data-index="2"></div>
+                        <div class="cell" data-index="3"></div>
+                        <div class="cell" data-index="4"></div>
+                        <div class="cell" data-index="5"></div>
+                        <div class="cell" data-index="6"></div>
+                        <div class="cell" data-index="7"></div>
+                        <div class="cell" data-index="8"></div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="control-button restart-btn" id="restartBtn">
+                        <span class="control-icon">↻</span>
+                        <span class="control-text">Restart Game</span>
+                    </button>
+                    <button class="control-button exit-btn" id="exitBtn">
+                        <span class="control-icon">✕</span>
+                        <span class="control-text">Exit</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="ttt.js"></script>
+</body>
+</html>
