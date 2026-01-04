@@ -1,0 +1,13 @@
+{
+  "name": "gamehub-backend",
+  "version": "1.0.0",
+  "description": "Backend for GameHub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  }
+}
