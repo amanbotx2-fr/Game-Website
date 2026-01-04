@@ -2,7 +2,7 @@
 // Chess Game - Core Logic & AI
 // =====================
 
-const API_BASE_URL = "https://YOUR-BACKEND-NAME.onrender.com";
+const API_BASE_URL = "https://gamehub-backend-cze5.onrender.com";
 
 // Game State
 let gameState = {
