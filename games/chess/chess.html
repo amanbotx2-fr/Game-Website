@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,12 @@
     <title>Chess - GameHub</title>
     <link rel="stylesheet" href="chess.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Header Section -->
         <header class="header">
-            <a href="index.html" class="back-button" aria-label="Back to home">
+            <a href="../../index.html" class="back-button" aria-label="Back to home">
                 <span class="back-arrow">←</span>
                 <span class="back-text">Back</span>
             </a>
@@ -27,7 +29,7 @@
                     <div class="mode-icon">🤖</div>
                     <h2 class="mode-title">Play vs AI</h2>
                     <p class="mode-description">Challenge the computer</p>
-                    
+
                     <div class="difficulty-selector">
                         <p class="difficulty-label">Select Difficulty</p>
                         <div class="difficulty-buttons">
@@ -36,7 +38,7 @@
                             <button class="difficulty-btn" data-difficulty="hard">Hard</button>
                         </div>
                     </div>
-                    
+
                     <button class="start-button" data-mode="ai">Start Game</button>
                 </article>
 
@@ -46,7 +48,7 @@
                     <h2 class="mode-title">Play with Friend</h2>
                     <p class="mode-description">Two players, one device</p>
                     <p class="mode-note">Local multiplayer</p>
-                    
+
                     <button class="start-button" data-mode="friend">Start Game</button>
                 </article>
             </div>
@@ -62,7 +64,7 @@
                     </div>
                     <div class="game-mode-label" id="gameModeLabel"></div>
                 </div>
-                
+
                 <div class="game-controls">
                     <button class="control-button" id="restartButton">
                         <span class="control-icon">↻</span>
@@ -98,4 +100,5 @@
 
     <script src="chess.js"></script>
 </body>
+
 </html>

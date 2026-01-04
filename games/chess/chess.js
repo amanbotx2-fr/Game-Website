@@ -2,6 +2,8 @@
 // Chess Game - Core Logic & AI
 // =====================
 
+const API_BASE_URL = "https://YOUR-BACKEND-NAME.onrender.com";
+
 // Game State
 let gameState = {
     mode: null, // 'ai' or 'friend'
@@ -217,6 +219,7 @@ function clearValidMoveIndicators() {
 // =====================
 
 function executeMove(fromRow, fromCol, toRow, toCol) {
+    // FUTURE: validate move via backend API
     const piece = gameState.board[fromRow][fromCol];
     const captured = gameState.board[toRow][toCol];
 
@@ -271,9 +274,9 @@ function getValidMoves(pos, piece, board) {
 
     // 1. Generate pseudo-valid moves based on geometry
     if (['♙', '♟'].includes(piece)) moves = getPawnMoves(pos, color, board);
-    else if (['♖', '♜'].includes(piece)) moves = getSlidingMoves(pos, [[0, 1], [0, -1], [1, 0], [-1, 0]], color, board);
-    else if (['♗', '♝'].includes(piece)) moves = getSlidingMoves(pos, [[1, 1], [1, -1], [-1, 1], [-1, -1]], color, board);
-    else if (['♕', '♛'].includes(piece)) moves = getSlidingMoves(pos, [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]], color, board);
+    else if (['♖', '♜'].includes(piece)) moves = getRookMoves(pos, color, board);
+    else if (['♗', '♝'].includes(piece)) moves = getBishopMoves(pos, color, board);
+    else if (['♕', '♛'].includes(piece)) moves = getQueenMoves(pos, color, board);
     else if (['♘', '♞'].includes(piece)) moves = getKnightMoves(pos, color, board);
     else if (['♔', '♚'].includes(piece)) moves = getKingMoves(pos, color, board);
 
@@ -283,31 +286,196 @@ function getValidMoves(pos, piece, board) {
 
 function getPawnMoves(pos, color, board) {
     const moves = [];
+    const piece = board[pos.row][pos.col];
+
+    // Potential moves to check: Forward 1, Forward 2, Capture Left, Capture Right
     const direction = color === 'white' ? -1 : 1;
-    const startRow = color === 'white' ? 6 : 1;
 
-    // Move forward 1
-    if (!board[pos.row + direction][pos.col]) {
-        moves.push({ r: pos.row + direction, c: pos.col });
-        // Move forward 2
-        if (pos.row === startRow && !board[pos.row + direction * 2][pos.col]) {
-            moves.push({ r: pos.row + direction * 2, c: pos.col });
-        }
-    }
+    // Candidates
+    const candidates = [
+        { r: pos.row + direction, c: pos.col },           // Forward 1
+        { r: pos.row + direction * 2, c: pos.col },       // Forward 2
+        { r: pos.row + direction, c: pos.col - 1 },       // Capture Left
+        { r: pos.row + direction, c: pos.col + 1 }        // Capture Right
+    ];
 
-    // Capture diagonals
-    [[direction, -1], [direction, 1]].forEach(offset => {
-        const r = pos.row + offset[0];
-        const c = pos.col + offset[1];
-        if (isOnBoard(r, c)) {
-            const target = board[r][c];
-            if (target && getPieceColor(target) !== color) {
-                moves.push({ r, c });
-            }
+    candidates.forEach(target => {
+        if (isPawnMoveValid(pos.row, pos.col, target.r, target.c, piece, board)) {
+            moves.push(target);
         }
     });
 
     return moves;
+}
+
+function isPawnMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    if (!isOnBoard(toRow, toCol)) return false;
+
+    const color = getPieceColor(piece);
+    const direction = color === 'white' ? -1 : 1;
+    const startRow = color === 'white' ? 6 : 1;
+    const targetPiece = board[toRow][toCol];
+
+    const rowDiff = toRow - fromRow;
+    const colDiff = toCol - fromCol;
+
+    // Direction check
+    if (color === 'white' && rowDiff > 0) return false; // Cannot move backward
+    if (color === 'black' && rowDiff < 0) return false;
+
+    // Forward Move (No Capture)
+    if (colDiff === 0) {
+        // Forward 1
+        if (rowDiff === direction) {
+            return targetPiece === '';
+        }
+        // Forward 2
+        if (rowDiff === direction * 2) {
+            if (fromRow !== startRow) return false;
+            // Path must be clear (check skipped square)
+            const skippedRow = fromRow + direction;
+            return targetPiece === '' && board[skippedRow][fromCol] === '';
+        }
+        return false;
+    }
+
+    // Diagonal Capture
+    if (Math.abs(colDiff) === 1 && rowDiff === direction) {
+        // Must capture opponent
+        if (targetPiece !== '' && getPieceColor(targetPiece) !== color) {
+            return true;
+        }
+        return false;
+    }
+
+    return false;
+}
+
+// ... (getPawnMoves and isPawnMoveValid are above)
+
+function getRookMoves(pos, color, board) {
+    const moves = [];
+    const piece = board[pos.row][pos.col];
+
+    // Horizontal and Vertical candidates
+    for (let i = 0; i < 8; i++) {
+        if (i !== pos.col) moves.push({ r: pos.row, c: i }); // Horizontal
+        if (i !== pos.row) moves.push({ r: i, c: pos.col }); // Vertical
+    }
+
+    return moves.filter(m => isRookMoveValid(pos.row, pos.col, m.r, m.c, piece, board));
+}
+
+function isRookMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    if (!isOnBoard(toRow, toCol)) return false;
+
+    const rowDiff = toRow - fromRow;
+    const colDiff = toCol - fromCol;
+
+    // Must be straight line
+    if (rowDiff !== 0 && colDiff !== 0) return false;
+
+    // Path Checking
+    const stepR = rowDiff === 0 ? 0 : rowDiff / Math.abs(rowDiff);
+    const stepC = colDiff === 0 ? 0 : colDiff / Math.abs(colDiff);
+
+    let r = fromRow + stepR;
+    let c = fromCol + stepC;
+
+    while (r !== toRow || c !== toCol) {
+        if (board[r][c] !== '') return false; // Path blocked
+        r += stepR;
+        c += stepC;
+    }
+
+    // Target Check
+    const target = board[toRow][toCol];
+    if (target !== '') {
+        // Can capture opponent
+        return getPieceColor(target) !== getPieceColor(piece);
+    }
+
+    return true;
+}
+
+function getBishopMoves(pos, color, board) {
+    const moves = [];
+    const piece = board[pos.row][pos.col];
+    const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+    // Generate all diagonal candidates
+    directions.forEach(dir => {
+        let r = pos.row + dir[0];
+        let c = pos.col + dir[1];
+        while (isOnBoard(r, c)) {
+            moves.push({ r, c });
+            r += dir[0];
+            c += dir[1];
+        }
+    });
+
+    return moves.filter(m => isBishopMoveValid(pos.row, pos.col, m.r, m.c, piece, board));
+}
+
+function isBishopMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    if (!isOnBoard(toRow, toCol)) return false;
+
+    const rowDiff = toRow - fromRow;
+    const colDiff = toCol - fromCol;
+
+    // Must be diagonal
+    if (Math.abs(rowDiff) !== Math.abs(colDiff)) return false;
+
+    // Path Checking
+    const stepR = rowDiff > 0 ? 1 : -1;
+    const stepC = colDiff > 0 ? 1 : -1;
+
+    let r = fromRow + stepR;
+    let c = fromCol + stepC;
+
+    while (r !== toRow || c !== toCol) {
+        if (board[r][c] !== '') return false; // Path blocked
+        r += stepR;
+        c += stepC;
+    }
+
+    // Target Check
+    const target = board[toRow][toCol];
+    if (target !== '') {
+        // Can capture opponent
+        return getPieceColor(target) !== getPieceColor(piece);
+    }
+
+    return true;
+}
+
+function getQueenMoves(pos, color, board) {
+    const moves = [];
+    const piece = board[pos.row][pos.col];
+
+    // Combine Rook (Straight) and Bishop (Diagonal) candidates
+    const directions = [
+        [0, 1], [0, -1], [1, 0], [-1, 0],   // Straights
+        [1, 1], [1, -1], [-1, 1], [-1, -1]  // Diagonals
+    ];
+
+    directions.forEach(dir => {
+        let r = pos.row + dir[0];
+        let c = pos.col + dir[1];
+        while (isOnBoard(r, c)) {
+            moves.push({ r, c });
+            r += dir[0];
+            c += dir[1];
+        }
+    });
+
+    return moves.filter(m => isQueenMoveValid(pos.row, pos.col, m.r, m.c, piece, board));
+}
+
+function isQueenMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    // Queen is Rook OR Bishop
+    return isRookMoveValid(fromRow, fromCol, toRow, toCol, piece, board) ||
+        isBishopMoveValid(fromRow, fromCol, toRow, toCol, piece, board);
 }
 
 function getSlidingMoves(pos, dirs, color, board) {
@@ -333,33 +501,74 @@ function getSlidingMoves(pos, dirs, color, board) {
 function getKnightMoves(pos, color, board) {
     const moves = [];
     const jumps = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+    const piece = board[pos.row][pos.col];
+
     jumps.forEach(j => {
         const r = pos.row + j[0];
         const c = pos.col + j[1];
-        if (isOnBoard(r, c)) {
-            const target = board[r][c];
-            if (!target || getPieceColor(target) !== color) {
-                moves.push({ r, c });
-            }
+        if (isKnightMoveValid(pos.row, pos.col, r, c, piece, board)) {
+            moves.push({ r, c });
         }
     });
     return moves;
 }
 
+function isKnightMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    if (!isOnBoard(toRow, toCol)) return false;
+
+    const rowDiff = Math.abs(toRow - fromRow);
+    const colDiff = Math.abs(toCol - fromCol);
+
+    // L-Shape Check
+    if (!((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2))) {
+        return false;
+    }
+
+    // Target Check
+    const target = board[toRow][toCol];
+    if (target !== '') {
+        // Can capture opponent
+        return getPieceColor(target) !== getPieceColor(piece);
+    }
+
+    return true;
+}
+
 function getKingMoves(pos, color, board) {
     const moves = [];
     const dirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+    const piece = board[pos.row][pos.col];
+
     dirs.forEach(d => {
         const r = pos.row + d[0];
         const c = pos.col + d[1];
-        if (isOnBoard(r, c)) {
-            const target = board[r][c];
-            if (!target || getPieceColor(target) !== color) {
-                moves.push({ r, c });
-            }
+        if (isKingMoveValid(pos.row, pos.col, r, c, piece, board)) {
+            moves.push({ r, c });
         }
     });
     return moves;
+}
+
+function isKingMoveValid(fromRow, fromCol, toRow, toCol, piece, board) {
+    if (!isOnBoard(toRow, toCol)) return false;
+
+    const rowDiff = Math.abs(toRow - fromRow);
+    const colDiff = Math.abs(toCol - fromCol);
+
+    // Range Check (Max 1 step)
+    if (rowDiff > 1 || colDiff > 1) return false;
+
+    // Must move
+    if (rowDiff === 0 && colDiff === 0) return false;
+
+    // Target Check
+    const target = board[toRow][toCol];
+    if (target !== '') {
+        // Can capture opponent
+        return getPieceColor(target) !== getPieceColor(piece);
+    }
+
+    return true;
 }
 
 function doesMoveExposeKing(from, to, color, board) {
@@ -390,7 +599,7 @@ function isKingInCheckRaw(color, board) {
         }
     }
 
-    if (!kingPos) return false; // Should not happen
+    if (!kingPos) return false;
 
     // Check if any opponent piece attacks King
     const opponentColor = color === 'white' ? 'black' : 'white';
@@ -399,49 +608,30 @@ function isKingInCheckRaw(color, board) {
         for (let c = 0; c < 8; c++) {
             const p = board[r][c];
             if (p && getPieceColor(p) === opponentColor) {
-                // Get strictly attacking moves (simplified)
-                // We re-use getValidMoves but disable recursion check to prevent infinite loop
-                // Or simply check primitive attack patterns
-                if (canPieceAttack(p, { row: r, col: c }, kingPos, board)) return true;
+                // Check if this piece can legally capture the King
+                // Note: We use the specific validation functions directly
+                // to avoid recursion loops and ensure strict rules.
+
+                let canAttack = false;
+                if (['♙', '♟'].includes(p)) {
+                    canAttack = isPawnMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                } else if (['♖', '♜'].includes(p)) {
+                    canAttack = isRookMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                } else if (['♘', '♞'].includes(p)) {
+                    canAttack = isKnightMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                } else if (['♗', '♝'].includes(p)) {
+                    canAttack = isBishopMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                } else if (['♕', '♛'].includes(p)) {
+                    canAttack = isQueenMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                } else if (['♔', '♚'].includes(p)) {
+                    canAttack = isKingMoveValid(r, c, kingPos.r, kingPos.c, p, board);
+                }
+
+                if (canAttack) return true;
             }
         }
     }
     return false;
-}
-
-// Simplified attack check for 'isKingInCheck' to avoid infinite recursion
-function canPieceAttack(piece, from, to, board) {
-    const color = getPieceColor(piece);
-    if (['♙', '♟'].includes(piece)) {
-        const dir = color === 'white' ? -1 : 1;
-        return (from.row + dir === to.r) && (Math.abs(from.col - to.c) === 1);
-    } else if (['♘', '♞'].includes(piece)) {
-        const dr = Math.abs(from.row - to.r);
-        const dc = Math.abs(from.col - to.c);
-        return (dr === 2 && dc === 1) || (dr === 1 && dc === 2);
-    } else if (['♚', '♔'].includes(piece)) {
-        return Math.abs(from.row - to.r) <= 1 && Math.abs(from.col - to.c) <= 1;
-    } else {
-        // Sliders
-        const dr = to.r - from.row;
-        const dc = to.c - from.col;
-        const stepR = dr === 0 ? 0 : dr / Math.abs(dr);
-        const stepC = dc === 0 ? 0 : dc / Math.abs(dc);
-
-        // Valid direction check
-        if (['♖', '♜'].includes(piece) && (dr !== 0 && dc !== 0)) return false;
-        if (['♗', '♝'].includes(piece) && Math.abs(dr) !== Math.abs(dc)) return false;
-        if (['♕', '♛'].includes(piece) && (dr !== 0 && dc !== 0) && Math.abs(dr) !== Math.abs(dc)) return false;
-
-        let r = from.row + stepR;
-        let c = from.col + stepC;
-        while (r !== to.r || c !== to.c) {
-            if (board[r][c] !== '') return false; // Blocked
-            r += stepR;
-            c += stepC;
-        }
-        return true;
-    }
 }
 
 function isCheckmate(color) {
@@ -470,50 +660,61 @@ function hasLegalMoves(color) {
 // AI Logic
 // =====================
 
+// =====================
+// AI Logic
+// =====================
+
 function makeAIMove() {
     const aiColor = 'black';
-    let allMoves = [];
-
-    // 1. Gather all legal moves
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            const p = gameState.board[r][c];
-            if (p && getPieceColor(p) === aiColor) {
-                const moves = getValidMoves({ row: r, col: c }, p, gameState.board);
-                moves.forEach(m => allMoves.push({ from: { r, c }, to: m }));
-            }
-        }
-    }
+    const allMoves = getAllLegalMoves(gameState.board, aiColor);
 
     if (allMoves.length === 0) return; // Should be handled by game over check
 
+    // 1. Identify Check Moves
+    const checkMoves = allMoves.filter(move => {
+        // Simulate move
+        const tempBoard = gameState.board.map(r => r.slice());
+        tempBoard[move.to.r][move.to.c] = tempBoard[move.from.r][move.from.c];
+        tempBoard[move.from.r][move.from.c] = '';
+
+        // Check if opponent (White) is in check
+        return isKingInCheckRaw('white', tempBoard);
+    });
+
+    // 2. Identify Capture Moves
+    const captureMoves = allMoves.filter(m => gameState.board[m.to.r][m.to.c] !== '');
+
     let selectedMove = null;
 
-    // 2. Select move based on difficulty
-    if (gameState.difficulty === 'easy') {
-        selectedMove = allMoves[Math.floor(Math.random() * allMoves.length)];
+    if (checkMoves.length > 0) {
+        // Prioritize Check
+        selectedMove = checkMoves[Math.floor(Math.random() * checkMoves.length)];
+    } else if (captureMoves.length > 0) {
+        // Then Capture
+        selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
     } else {
-        // Medium/Hard: Prioritize captures
-        const captureMoves = allMoves.filter(m => gameState.board[m.to.r][m.to.c] !== '');
-
-        if (captureMoves.length > 0) {
-            // Pick random capture
-            if (gameState.difficulty === 'medium' && Math.random() > 0.3) {
-                selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-            } else {
-                // Hard: Pick best capture (simplified by piece value?? Not strictly required but nice)
-                // For now, just pick a capture
-                selectedMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-            }
-        }
-
-        if (!selectedMove) {
-            selectedMove = allMoves[Math.floor(Math.random() * allMoves.length)];
-        }
+        // Fallback to random move
+        selectedMove = allMoves[Math.floor(Math.random() * allMoves.length)];
     }
 
-    // 3. Execute
+    // Execute
     executeMove(selectedMove.from.r, selectedMove.from.c, selectedMove.to.r, selectedMove.to.c);
+}
+
+function getAllLegalMoves(board, color) {
+    const moves = [];
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const p = board[r][c];
+            if (p && getPieceColor(p) === color) {
+                const validMoves = getValidMoves({ row: r, col: c }, p, board);
+                validMoves.forEach(m => {
+                    moves.push({ from: { r, c }, to: m });
+                });
+            }
+        }
+    }
+    return moves;
 }
 
 // =====================

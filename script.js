@@ -31,11 +31,11 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Play button clicked for:', gameName);
 
             if (gameName === 'chess') {
-                window.location.href = 'chess.html';
+                window.location.href = 'games/chess/chess.html';
             } else if (gameName === 'ttt') {
-                window.location.href = 'ttt.html';
+                window.location.href = 'games/tictactoe/ttt.html';
             } else if (gameName === 'sudoku') {
-                window.location.href = 'sudoku.html';
+                window.location.href = 'games/sudoku/sudoku.html';
             } else {
                 // Placeholder for future games
                 console.log('Navigation not implemented for:', gameName);
