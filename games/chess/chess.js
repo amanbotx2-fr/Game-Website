@@ -218,8 +218,64 @@ function clearValidMoveIndicators() {
 // Move Execution & Loop
 // =====================
 
-function executeMove(fromRow, fromCol, toRow, toCol) {
-    // FUTURE: validate move via backend API
+async function executeMove(fromRow, fromCol, toRow, toCol) {
+    // 1. Prepare Backend Payload
+    const payload = {
+        board: gameState.board,
+        from: { row: fromRow, col: fromCol },
+        to: { row: toRow, col: toCol },
+        turn: gameState.currentTurn
+    };
+
+    let useBackend = true;
+    let backendData = null;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/chess/validate-move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error('Network error');
+        backendData = await response.json();
+    } catch (e) {
+        console.warn('Offline mode: ', e);
+        useBackend = false;
+    }
+
+    // 2. Handle Backend Result
+    if (useBackend && backendData) {
+        if (!backendData.valid) {
+            alert(`Invalid Move: ${backendData.reason}`);
+            return; // Block move
+        }
+
+        // Capture logic for UI (Backend doesn't return captured lists yet)
+        const captured = gameState.board[toRow][toCol];
+        if (captured) {
+            if (gameState.currentTurn === 'white') gameState.capturedByWhite.push(captured);
+            else gameState.capturedByBlack.push(captured);
+            updateCapturedPieces();
+        }
+
+        // Apply Authoritative State
+        gameState.board = backendData.board;
+        gameState.currentTurn = backendData.nextTurn;
+
+        // Update UI
+        deselectSquare();
+        renderBoard();
+        checkGameOverConditions();
+
+        // Trigger AI if needed
+        if (gameState.mode === 'ai' && gameState.currentTurn === 'black' && !gameState.isGameOver) {
+            setTimeout(makeAIMove, 600);
+        }
+        return;
+    }
+
+    // 3. Fallback: Local Logic (Original Code)
+    // FUTURE: validate move via backend API (Fallback active)
     const piece = gameState.board[fromRow][fromCol];
     const captured = gameState.board[toRow][toCol];
 
@@ -239,16 +295,7 @@ function executeMove(fromRow, fromCol, toRow, toCol) {
     renderBoard();
 
     // Check game logic
-    const opponentColor = gameState.currentTurn === 'white' ? 'black' : 'white';
-    if (isCheckmate(opponentColor)) {
-        endGame(`${gameState.currentTurn.charAt(0).toUpperCase() + gameState.currentTurn.slice(1)} Wins by Checkmate!`);
-        return;
-    }
-
-    if (isStalemate(opponentColor)) {
-        endGame("Draw by Stalemate!");
-        return;
-    }
+    checkGameOverConditions(); // Extracted for reuse
 
     // Switch Turn
     switchTurn();
@@ -257,6 +304,20 @@ function executeMove(fromRow, fromCol, toRow, toCol) {
     if (gameState.mode === 'ai' && gameState.currentTurn === 'black' && !gameState.isGameOver) {
         setTimeout(makeAIMove, 600);
     }
+}
+
+function checkGameOverConditions() {
+    const opponentColor = gameState.currentTurn === 'white' ? 'black' : 'white';
+    if (isCheckmate(opponentColor)) {
+        endGame(`${gameState.currentTurn.charAt(0).toUpperCase() + gameState.currentTurn.slice(1)} Wins by Checkmate!`);
+        return true;
+    }
+
+    if (isStalemate(opponentColor)) {
+        endGame("Draw by Stalemate!");
+        return true;
+    }
+    return false;
 }
 
 function switchTurn() {
